@@ -38,4 +38,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "export DATABASE_URL=file:./dev.db; npx prisma db push && npm run seed && node dist/server/index.js"]
+CMD ["sh", "-c", "export DATABASE_URL=file:./dev.db; npx prisma db push && node dist/server/seed.js && node dist/server/index.js"]
