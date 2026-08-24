@@ -20,6 +20,28 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Vercel Serverless DB Cold Start Auto-Init
+let vercelDbInitialized = false;
+async function ensureVercelDb() {
+  if (process.env.VERCEL && !vercelDbInitialized) {
+    vercelDbInitialized = true;
+    try {
+      const { execSync } = await import('child_process');
+      execSync('npx prisma db push --accept-data-loss', { stdio: 'ignore', env: { ...process.env, DATABASE_URL: 'file:/tmp/dev.db' } });
+      await seedDatabase();
+    } catch (err) {
+      console.error('Vercel DB auto-init error:', err);
+    }
+  }
+}
+
+app.use(async (req, res, next) => {
+  if (process.env.VERCEL) {
+    await ensureVercelDb();
+  }
+  next();
+});
+
 // Health & API Root Route
 app.get(['/api', '/api/health'], (req, res) => {
   const acceptsHtml = req.accepts('html') && !req.xhr && !req.headers['accept']?.includes('application/json');
