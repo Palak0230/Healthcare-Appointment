@@ -151,24 +151,26 @@ if (!process.env.VERCEL) {
   });
 }
 
-// Start Express Server & Cron Engine
-const server = app.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🏥 Healthcare Appointment Server running on port ${PORT}`);
-  console.log(`🔗 API Base: http://localhost:${PORT}/api`);
-  console.log(`=======================================================`);
+// Start Express Server & Cron Engine in non-Vercel environments (Render, local dev)
+if (!process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🏥 Healthcare Appointment Server running on port ${PORT}`);
+    console.log(`🔗 API Base: http://localhost:${PORT}/api`);
+    console.log(`=======================================================`);
 
-  initScheduler();
-});
+    initScheduler();
+  });
 
-server.on('error', (err: any) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`\n❌ Error: Port ${PORT} is already in use by another process.`);
-    console.error(`💡 Solution: Stop the existing server process or run: taskkill /F /PID <pid>\n`);
-  } else {
-    console.error('Server startup error:', err);
-  }
-});
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ Error: Port ${PORT} is already in use by another process.`);
+      console.error(`💡 Solution: Stop the existing server process or run: taskkill /F /PID <pid>\n`);
+    } else {
+      console.error('Server startup error:', err);
+    }
+  });
+}
 
 export default app;
 
