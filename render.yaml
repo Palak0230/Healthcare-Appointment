@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: healthcare-appointment
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: JWT_SECRET
+        value: super-secret-jwt-key-change-in-production-12345
+      - key: DATABASE_URL
+        value: file:./dev.db
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: Healthcare Clinic <noreply@healthcare-clinic.com>
