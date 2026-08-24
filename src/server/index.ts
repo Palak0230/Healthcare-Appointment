@@ -11,6 +11,7 @@ import { getDashboardStats, getNotificationLogs, getDoctorLeaves } from './contr
 import { authenticateToken, requireRole } from './middleware/authMiddleware.js';
 import { initScheduler } from './services/schedulerService.js';
 import { seedDatabase } from './seed.js';
+import prisma from './config/db.js';
 
 dotenv.config();
 
@@ -20,15 +21,135 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Vercel Serverless DB Cold Start Auto-Init
+// Vercel Serverless DB Cold Start Auto-Init (Fast Native Raw SQL)
 let vercelDbInitialized = false;
 async function ensureVercelDb() {
   if (process.env.VERCEL && !vercelDbInitialized) {
     vercelDbInitialized = true;
     try {
-      const { execSync } = await import('child_process');
-      execSync('npx prisma db push --accept-data-loss', { stdio: 'ignore', env: { ...process.env, DATABASE_URL: 'file:/tmp/dev.db' } });
-      await seedDatabase();
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "User" (
+          "id" TEXT PRIMARY KEY,
+          "email" TEXT UNIQUE NOT NULL,
+          "password" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "role" TEXT NOT NULL DEFAULT 'PATIENT',
+          "phone" TEXT,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "DoctorProfile" (
+          "id" TEXT PRIMARY KEY,
+          "userId" TEXT UNIQUE NOT NULL,
+          "specialization" TEXT NOT NULL,
+          "workingHoursStart" TEXT NOT NULL DEFAULT '09:00',
+          "workingHoursEnd" TEXT NOT NULL DEFAULT '17:00',
+          "slotDurationMinutes" INTEGER NOT NULL DEFAULT 30,
+          "bio" TEXT,
+          "consultationFee" REAL NOT NULL DEFAULT 100.0,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "DoctorLeave" (
+          "id" TEXT PRIMARY KEY,
+          "doctorId" TEXT NOT NULL,
+          "leaveDate" TEXT NOT NULL,
+          "reason" TEXT,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("doctorId") REFERENCES "DoctorProfile" ("id") ON DELETE CASCADE
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "Appointment" (
+          "id" TEXT PRIMARY KEY,
+          "patientId" TEXT NOT NULL,
+          "doctorId" TEXT NOT NULL,
+          "date" TEXT NOT NULL,
+          "startTime" TEXT NOT NULL,
+          "endTime" TEXT NOT NULL,
+          "status" TEXT NOT NULL DEFAULT 'BOOKED',
+          "cancellationReason" TEXT,
+          "googleCalendarEventId" TEXT,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("patientId") REFERENCES "User" ("id") ON DELETE CASCADE,
+          FOREIGN KEY ("doctorId") REFERENCES "DoctorProfile" ("id") ON DELETE CASCADE
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "SymptomSummary" (
+          "id" TEXT PRIMARY KEY,
+          "appointmentId" TEXT UNIQUE NOT NULL,
+          "rawSymptoms" TEXT NOT NULL,
+          "urgencyLevel" TEXT NOT NULL DEFAULT 'MEDIUM',
+          "chiefComplaint" TEXT NOT NULL,
+          "suggestedQuestions" TEXT NOT NULL,
+          "generatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("appointmentId") REFERENCES "Appointment" ("id") ON DELETE CASCADE
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "PostVisitSummary" (
+          "id" TEXT PRIMARY KEY,
+          "appointmentId" TEXT UNIQUE NOT NULL,
+          "rawNotes" TEXT NOT NULL,
+          "prescription" TEXT,
+          "patientFriendlySummary" TEXT NOT NULL,
+          "medicationSchedule" TEXT,
+          "followUpSteps" TEXT,
+          "generatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("appointmentId") REFERENCES "Appointment" ("id") ON DELETE CASCADE
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "SlotHold" (
+          "id" TEXT PRIMARY KEY,
+          "doctorId" TEXT NOT NULL,
+          "patientId" TEXT NOT NULL,
+          "date" TEXT NOT NULL,
+          "startTime" TEXT NOT NULL,
+          "expiresAt" DATETIME NOT NULL,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "MedicationReminder" (
+          "id" TEXT PRIMARY KEY,
+          "appointmentId" TEXT NOT NULL,
+          "patientId" TEXT NOT NULL,
+          "medicationName" TEXT NOT NULL,
+          "dosage" TEXT NOT NULL,
+          "frequency" TEXT NOT NULL,
+          "timeOfDay" TEXT NOT NULL,
+          "startDate" TEXT NOT NULL,
+          "endDate" TEXT NOT NULL,
+          "active" BOOLEAN NOT NULL DEFAULT 1,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "NotificationLog" (
+          "id" TEXT PRIMARY KEY,
+          "recipientEmail" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "subject" TEXT NOT NULL,
+          "status" TEXT NOT NULL,
+          "retryCount" INTEGER NOT NULL DEFAULT 0,
+          "errorMessage" TEXT,
+          "sentAt" DATETIME,
+          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      const userCount = await prisma.user.count();
+      if (userCount === 0) {
+        await seedDatabase();
+      }
     } catch (err) {
       console.error('Vercel DB auto-init error:', err);
     }
