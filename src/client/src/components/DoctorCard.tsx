@@ -24,9 +24,17 @@ interface DoctorCardProps {
 }
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onSelectDoctor, isSelected }) => {
+  const handleSelect = () => {
+    onSelectDoctor(doctor);
+    setTimeout(() => {
+      document.getElementById('slot-picker-container')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  };
+
   return (
     <div
-      className={`glass-panel glass-panel-hover rounded-2xl p-6 relative transition-all border ${
+      onClick={handleSelect}
+      className={`glass-panel glass-panel-hover rounded-2xl p-6 relative transition-all cursor-pointer border ${
         isSelected
           ? 'border-sky-500 bg-sky-950/40 shadow-lg shadow-sky-500/10 ring-1 ring-sky-500/50'
           : 'border-slate-800 hover:border-slate-700'
@@ -74,7 +82,10 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onSelectDoctor, 
         </div>
 
         <button
-          onClick={() => onSelectDoctor(doctor)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSelect();
+          }}
           className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md ${
             isSelected
               ? 'bg-sky-500 text-white shadow-sky-500/30'

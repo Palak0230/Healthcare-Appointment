@@ -9,6 +9,7 @@
     "build:server": "tsc",
     "build": "npm run build:client && npm run build:server",
     "start": "node dist/server/index.js",
+    "postinstall": "prisma generate",
     "seed": "npx tsx src/server/seed.ts",
     "prisma:push": "prisma db push"
   },

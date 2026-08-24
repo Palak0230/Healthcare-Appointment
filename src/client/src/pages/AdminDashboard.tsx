@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../services/api';
 import { DoctorCard, Doctor } from '../components/DoctorCard';
-import { Shield, Users, Stethoscope, Calendar, Mail, AlertTriangle, Plus, RefreshCw, CheckCircle2, Clock, DollarSign, Award } from 'lucide-react';
+import { SlotPicker, Slot } from '../components/SlotPicker';
+import { SymptomFormModal } from '../components/SymptomFormModal';
+import { Shield, Users, Stethoscope, Calendar, Mail, AlertTriangle, Plus, RefreshCw, CheckCircle2, Clock, DollarSign, Award, X } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
@@ -9,6 +11,11 @@ export const AdminDashboard: React.FC = () => {
   const [notificationLogs, setNotificationLogs] = useState<any[]>([]);
   const [doctorLeaves, setDoctorLeaves] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Doctor Booking Modal state
+  const [selectedDoctorForBooking, setSelectedDoctorForBooking] = useState<Doctor | null>(null);
+  const [bookingSlot, setBookingSlot] = useState<{ date: string; slot: Slot; holdId: string } | null>(null);
+  const [showSymptomModal, setShowSymptomModal] = useState<boolean>(false);
 
   // New Doctor Form Modal state
   const [showAddDoctorModal, setShowAddDoctorModal] = useState<boolean>(false);
@@ -167,7 +174,7 @@ export const AdminDashboard: React.FC = () => {
               <DoctorCard
                 key={doctor.id}
                 doctor={doctor}
-                onSelectDoctor={() => {}}
+                onSelectDoctor={(doc) => setSelectedDoctorForBooking(doc)}
               />
             ))}
           </div>
@@ -360,6 +367,56 @@ export const AdminDashboard: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Admin Doctor Slot & Booking Modal */}
+      {selectedDoctorForBooking && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass-panel w-full max-w-3xl rounded-3xl border border-slate-700 p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                  <Stethoscope className="w-5 h-5 text-sky-400" /> Dr. {selectedDoctorForBooking.user.name} Schedule & Slots
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">{selectedDoctorForBooking.specialization} • ${selectedDoctorForBooking.consultationFee.toFixed(2)} / session</p>
+              </div>
+              <button
+                onClick={() => setSelectedDoctorForBooking(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <SlotPicker
+              doctorId={selectedDoctorForBooking.id}
+              doctorName={selectedDoctorForBooking.user.name}
+              onSlotSelected={(date, slot, holdId) => {
+                setBookingSlot({ date, slot, holdId });
+                setShowSymptomModal(true);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Symptom Assessment Modal */}
+      {showSymptomModal && bookingSlot && selectedDoctorForBooking && (
+        <SymptomFormModal
+          doctorId={selectedDoctorForBooking.id}
+          doctorName={selectedDoctorForBooking.user.name}
+          specialization={selectedDoctorForBooking.specialization}
+          date={bookingSlot.date}
+          startTime={bookingSlot.slot.startTime}
+          endTime={bookingSlot.slot.endTime}
+          onClose={() => setShowSymptomModal(false)}
+          onSuccess={() => {
+            setShowSymptomModal(false);
+            setBookingSlot(null);
+            setSelectedDoctorForBooking(null);
+            fetchAdminData();
+          }}
+        />
       )}
 
     </div>

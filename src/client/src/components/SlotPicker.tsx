@@ -84,6 +84,9 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({ doctorId, doctorName, on
       setSelectedSlot(slot);
       setHoldId(res.holdId);
       setHoldExpiresAt(new Date(res.expiresAt));
+
+      // Automatically proceed to symptom assessment modal
+      onSlotSelected(selectedDate, slot, res.holdId);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to hold slot');
       fetchSlots(selectedDate);

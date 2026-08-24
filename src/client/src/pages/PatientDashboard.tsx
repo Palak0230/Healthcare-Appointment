@@ -184,7 +184,7 @@ export const PatientDashboard: React.FC = () => {
 
             {/* Interactive Slot Picker Panel */}
             {selectedDoctor && (
-              <div className="lg:col-span-2">
+              <div id="slot-picker-container" className="lg:col-span-2 scroll-mt-24">
                 <SlotPicker
                   doctorId={selectedDoctor.id}
                   doctorName={selectedDoctor.user.name}
