@@ -7,7 +7,7 @@
     "dev": "npx tsx watch src/server/index.ts",
     "build:client": "vite build",
     "build:server": "tsc",
-    "build": "npm run build:client && npm run build:server",
+    "build": "npx prisma generate && npx prisma db push && npm run build:server && node dist/server/seed.js && npm run build:client",
     "start": "node dist/server/index.js",
     "postinstall": "prisma generate",
     "seed": "node dist/server/seed.js",
