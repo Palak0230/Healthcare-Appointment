@@ -209,28 +209,28 @@ app.get(['/api', '/api/health'], (req, res) => {
     });
 });
 // Auth Routes
-app.post('/api/auth/register', register);
-app.post('/api/auth/login', login);
-app.get('/api/auth/me', authenticateToken, getCurrentUser);
+app.post(['/api/auth/register', '/auth/register'], register);
+app.post(['/api/auth/login', '/auth/login'], login);
+app.get(['/api/auth/me', '/auth/me'], authenticateToken, getCurrentUser);
 // Doctor Routes
-app.get('/api/doctors', getDoctors);
-app.get('/api/doctors/:id', getDoctorById);
-app.get('/api/doctors/:id/slots', getDoctorSlots);
-app.post('/api/doctors/leave', authenticateToken, requireRole(['ADMIN', 'DOCTOR']), addDoctorLeave);
-app.delete('/api/doctors/leave/:id', authenticateToken, requireRole(['ADMIN', 'DOCTOR']), removeDoctorLeave);
-app.put('/api/doctors/:id', authenticateToken, requireRole(['ADMIN', 'DOCTOR']), updateDoctorProfile);
+app.get(['/api/doctors', '/doctors'], getDoctors);
+app.get(['/api/doctors/:id', '/doctors/:id'], getDoctorById);
+app.get(['/api/doctors/:id/slots', '/doctors/:id/slots'], getDoctorSlots);
+app.post(['/api/doctors/leave', '/doctors/leave'], authenticateToken, requireRole(['ADMIN', 'DOCTOR']), addDoctorLeave);
+app.delete(['/api/doctors/leave/:id', '/doctors/leave/:id'], authenticateToken, requireRole(['ADMIN', 'DOCTOR']), removeDoctorLeave);
+app.put(['/api/doctors/:id', '/doctors/:id'], authenticateToken, requireRole(['ADMIN', 'DOCTOR']), updateDoctorProfile);
 // Appointment Routes
-app.post('/api/appointments/hold-slot', authenticateToken, holdSlot);
-app.post('/api/appointments/book', authenticateToken, bookAppointment);
-app.get('/api/appointments', authenticateToken, getAppointments);
-app.post('/api/appointments/:id/post-visit', authenticateToken, requireRole(['DOCTOR', 'ADMIN']), submitPostVisit);
-app.post('/api/appointments/:id/cancel', authenticateToken, cancelAppointment);
+app.post(['/api/appointments/hold-slot', '/appointments/hold-slot'], authenticateToken, holdSlot);
+app.post(['/api/appointments/book', '/appointments/book'], authenticateToken, bookAppointment);
+app.get(['/api/appointments', '/appointments'], authenticateToken, getAppointments);
+app.post(['/api/appointments/:id/post-visit', '/appointments/:id/post-visit'], authenticateToken, requireRole(['DOCTOR', 'ADMIN']), submitPostVisit);
+app.post(['/api/appointments/:id/cancel', '/appointments/:id/cancel'], authenticateToken, cancelAppointment);
 // Admin Routes
-app.get('/api/admin/stats', authenticateToken, requireRole(['ADMIN']), getDashboardStats);
-app.get('/api/admin/notifications', authenticateToken, requireRole(['ADMIN']), getNotificationLogs);
-app.get('/api/admin/leaves', authenticateToken, requireRole(['ADMIN']), getDoctorLeaves);
+app.get(['/api/admin/stats', '/admin/stats'], authenticateToken, requireRole(['ADMIN']), getDashboardStats);
+app.get(['/api/admin/notifications', '/admin/notifications'], authenticateToken, requireRole(['ADMIN']), getNotificationLogs);
+app.get(['/api/admin/leaves', '/admin/leaves'], authenticateToken, requireRole(['ADMIN']), getDoctorLeaves);
 // Seed Route for easy setup/demo testing
-app.post('/api/seed', async (req, res) => {
+app.post(['/api/seed', '/seed'], async (req, res) => {
     try {
         await seedDatabase();
         return res.json({ message: 'Database successfully seeded with demo users, doctors, and appointments!' });
