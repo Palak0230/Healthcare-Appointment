@@ -4,7 +4,6 @@ RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /app
 
-ENV NODE_ENV=production
 ENV DATABASE_URL="file:./dev.db"
 
 COPY package*.json ./
