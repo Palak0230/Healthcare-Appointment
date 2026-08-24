@@ -1,5 +1,9 @@
 # MedCare AI - Healthcare Appointment & Follow-Up Manager
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render-00B5AD?style=for-the-badge&logo=render&logoColor=white)](https://healthcare-appointment-udt4.onrender.com)
+
+🌐 **Live Application URL**: [https://healthcare-appointment-udt4.onrender.com](https://healthcare-appointment-udt4.onrender.com)
+
 An enterprise-grade, full-stack Healthcare Appointment Platform featuring role-based portals for **Patients**, **Doctors**, and **Admins**. Powered by AI pre-visit symptom analysis, AI post-visit care plan generation, database transaction locks for double-booking prevention, 5-minute temporary slot holds, doctor leave conflict management with automatic patient notifications, background medication reminders, Nodemailer email alerts, and Google Calendar API synchronization.
 
 ---
