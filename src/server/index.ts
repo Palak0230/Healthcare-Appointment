@@ -146,3 +146,5 @@ server.on('error', (err: any) => {
   }
 });
 
+export default app;
+
