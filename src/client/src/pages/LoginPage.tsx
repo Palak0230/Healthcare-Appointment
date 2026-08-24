@@ -26,6 +26,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
     }
   };
 
+  const handleQuickDemo = async (role: 'PATIENT' | 'DOCTOR' | 'ADMIN') => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      await quickDemoLogin(role);
+    } catch (err: any) {
+      console.error('Quick demo login error:', err);
+      setErrorMsg(err.message || 'Demo login failed. Please check network/backend.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
       <div className="glass-panel w-full max-w-md rounded-3xl border border-slate-800 p-8 shadow-2xl relative overflow-hidden">
@@ -48,20 +61,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
           </p>
           <div className="grid grid-cols-3 gap-1.5 text-center">
             <button
-              onClick={() => quickDemoLogin('PATIENT')}
-              className="py-1.5 px-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 rounded-xl text-[11px] font-semibold transition-all border border-sky-500/30"
+              onClick={() => handleQuickDemo('PATIENT')}
+              disabled={loading}
+              className="py-1.5 px-2 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 rounded-xl text-[11px] font-semibold transition-all border border-sky-500/30 disabled:opacity-50"
             >
               Patient
             </button>
             <button
-              onClick={() => quickDemoLogin('DOCTOR')}
-              className="py-1.5 px-2 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 rounded-xl text-[11px] font-semibold transition-all border border-teal-500/30"
+              onClick={() => handleQuickDemo('DOCTOR')}
+              disabled={loading}
+              className="py-1.5 px-2 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 rounded-xl text-[11px] font-semibold transition-all border border-teal-500/30 disabled:opacity-50"
             >
               Doctor
             </button>
             <button
-              onClick={() => quickDemoLogin('ADMIN')}
-              className="py-1.5 px-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl text-[11px] font-semibold transition-all border border-indigo-500/30"
+              onClick={() => handleQuickDemo('ADMIN')}
+              disabled={loading}
+              className="py-1.5 px-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl text-[11px] font-semibold transition-all border border-indigo-500/30 disabled:opacity-50"
             >
               Admin
             </button>
