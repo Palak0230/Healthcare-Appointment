@@ -15,6 +15,27 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
+// Vercel Serverless DB Cold Start Auto-Init
+let vercelDbInitialized = false;
+async function ensureVercelDb() {
+    if (process.env.VERCEL && !vercelDbInitialized) {
+        vercelDbInitialized = true;
+        try {
+            const { execSync } = await import('child_process');
+            execSync('npx prisma db push --accept-data-loss', { stdio: 'ignore', env: { ...process.env, DATABASE_URL: 'file:/tmp/dev.db' } });
+            await seedDatabase();
+        }
+        catch (err) {
+            console.error('Vercel DB auto-init error:', err);
+        }
+    }
+}
+app.use(async (req, res, next) => {
+    if (process.env.VERCEL) {
+        await ensureVercelDb();
+    }
+    next();
+});
 // Health & API Root Route
 app.get(['/api', '/api/health'], (req, res) => {
     const acceptsHtml = req.accepts('html') && !req.xhr && !req.headers['accept']?.includes('application/json');
@@ -99,20 +120,22 @@ app.post('/api/seed', async (req, res) => {
         return res.status(500).json({ error: 'Failed to seed database' });
     }
 });
-// Serve frontend static files in production
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const clientDistPath = path.join(__dirname, '../../dist/client');
-app.use(express.static(clientDistPath));
-app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api'))
-        return next();
-    res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
-        if (err) {
-            res.status(200).send('Healthcare Appointment API Server Running. Build client using npm run build for full UI.');
-        }
+// Serve frontend static files in non-Vercel environments (Render, local dev)
+if (!process.env.VERCEL) {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const clientDistPath = path.join(__dirname, '../../dist/client');
+    app.use(express.static(clientDistPath));
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api'))
+            return next();
+        res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
+            if (err) {
+                res.status(200).send('Healthcare Appointment API Server Running. Build client using npm run build for full UI.');
+            }
+        });
     });
-});
+}
 // Start Express Server & Cron Engine
 const server = app.listen(PORT, () => {
     console.log(`=======================================================`);
@@ -130,3 +153,4 @@ server.on('error', (err) => {
         console.error('Server startup error:', err);
     }
 });
+export default app;

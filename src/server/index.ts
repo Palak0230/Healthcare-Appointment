@@ -133,21 +133,23 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
-// Serve frontend static files in production
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const clientDistPath = path.join(__dirname, '../../dist/client');
+// Serve frontend static files in non-Vercel environments (Render, local dev)
+if (!process.env.VERCEL) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const clientDistPath = path.join(__dirname, '../../dist/client');
 
-app.use(express.static(clientDistPath));
+  app.use(express.static(clientDistPath));
 
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
-    if (err) {
-      res.status(200).send('Healthcare Appointment API Server Running. Build client using npm run build for full UI.');
-    }
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
+      if (err) {
+        res.status(200).send('Healthcare Appointment API Server Running. Build client using npm run build for full UI.');
+      }
+    });
   });
-});
+}
 
 // Start Express Server & Cron Engine
 const server = app.listen(PORT, () => {
